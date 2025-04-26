@@ -7,7 +7,7 @@ const convertLKRtoUSD = (lkrAmount) => {
   const conversionRate = 325;
   return Math.round((lkrAmount / conversionRate) * 100); // cents
 };
-
+//Sample
 exports.processPayment = async (req, res) => {
   const { paymentMethodId, orderCode } = req.body;
 
