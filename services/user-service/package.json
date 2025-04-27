@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "user-service.js",
   "scripts": {
-    "start": "nodemon user-service.js"
+    "start": "nodemon  user-service.js"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +12,7 @@
   "dependencies": {
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",

@@ -65,34 +65,37 @@ const driverController = {
     });
   }),
 
-  // @desc    Authenticate driver
-  // @route   POST /api/v1/drivers/login
-  // @access  Public
+  //login driver
   loginDriver: asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    // Check for driver email
-    const driver = await Driver.findOne({ email });
+  // Check for driver email
+  const driver = await Driver.findOne({ email });
 
-    if (driver && (await bcrypt.compare(password, driver.password))) {
-      res.json({
-        _id: driver._id,
-        firstName: driver.firstName,
-        lastName: driver.lastName,
-        email: driver.email,
-        vehicleType: driver.vehicleType,
-        isAvailable: driver.isAvailable,
-        token: generateToken(driver._id),
-      });
-    } else {
-      res.status(401);
-      throw new Error("Invalid credentials");
-    }
-  }),
+  if (driver && (await bcrypt.compare(password, driver.password))) {
+    // Construct the user object to return
+    const userData = {
+      firstName: driver.firstName,
+      lastName: driver.lastName,
+      email: driver.email,
+      phone: driver.phone, // Include phone since drivers have this field
+      id: driver._id,
+    };
 
-  // @desc    Get driver profile
-  // @route   GET /api/v1/drivers/me
-  // @access  Private (Driver only)
+    res.json({
+      status: "success",
+      user: userData,
+      userType: "driver", // Add userType for driver
+      vehicleType: driver.vehicleType, // Keep additional driver-specific fields
+      isAvailable: driver.isAvailable,
+      token: generateToken(driver._id),
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid credentials");
+  }
+}),
+// Get driver profile
   getDriverProfile: asyncHandler(async (req, res) => {
     const driver = await Driver.findById(req.driver._id).select("-password");
 

@@ -37,35 +37,43 @@ const userController = {
       id: userCreated._id,
     });
   }),
+  
   //!Login
 
   login: asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-
+  
     // if email is correct
     const user = await User.findOne({ email });
     if (!user) {
       throw new Error("Invalid login credential");
     }
-
+  
     // Compare the user password
     const isMatched = await bcrypt.compare(password, user.password);
-    //Validate user password
     if (!isMatched) {
       throw new Error("Invalid login credential");
     }
-
-    //Generate a token
+  
+    // Generate a token
     const token = jwt.sign({ id: user._id }, process.env.JWT_KEY, {
       expiresIn: "30d",
     });
-
-    res.status(200).json({
-      status: "success",
-      token,
-      id: user._id,
+  
+    // Construct the user object to return
+    const userData = {
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
       username: user.username,
+      id: user._id,
+    };
+  
+    res.status(200).json({
+      status: "success",
+      user: userData, // Add the user object
+      userType: "user", // Add userType (since frontend expects it)
+      token,
     });
   }),
 

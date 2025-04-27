@@ -40,31 +40,38 @@ const adminController = {
   //! Admin Login
   login: asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-
+  
     //* find admin by email
     const admin = await Admin.findOne({ email });
     if (!admin) {
       throw new Error("Invalid login credential");
     }
-
+  
     //*Compare the admin password
     const isMatched = await bcrypt.compare(password, admin.password);
     if (!isMatched) {
       throw new Error("Invalid login Credentials");
     }
-
+  
     //!Generate the token
-    //? Send the admin id along with token
     const token = jwt.sign({ id: admin._id }, process.env.JWT_KEY, {
       expiresIn: "30d",
     });
-
-    res.json({
-      status: "success",
-      token,
-      id: admin._id,
+  
+    // Construct the user object to return
+    const userData = {
+      firstName: admin.firstName,
+      lastName: admin.lastName,
       email: admin.email,
       username: admin.username,
+      id: admin._id,
+    };
+  
+    res.json({
+      status: "success",
+      user: userData,
+      userType: "admin", // Add userType for admin
+      token,
     });
   }),
 
@@ -123,7 +130,7 @@ const adminController = {
       }
     );
     res.json({
-      message: "Admin profile updated successful",
+      message: "Admin profile updated successfully",
       updateAdmin,
     });
   }),
