@@ -1,5 +1,3 @@
-// controllers/driverController.js
-
 const Driver = require('../models/driver');
 
 // GET all drivers

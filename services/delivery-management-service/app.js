@@ -40,32 +40,24 @@ connectDB()
     // 🟢 Active delivery room tracking
     const activeDeliveries = new Set();
 
-    io.on('connection', (socket) => {
-      console.log('🔌 Client connected:', socket.id);
-
+    io.on('connection', socket => {
+      console.log('Client connected:', socket.id);
+    
+      // Client (map viewer) wants to watch a delivery
       socket.on('trackDelivery', (deliveryId) => {
-        console.log(`📍 Tracking delivery: ${deliveryId}`);
         socket.join(deliveryId);
-        activeDeliveries.add(deliveryId);
       });
-
+    
+      // Driver app emits its GPS coords
+      socket.on('updateDriverLocation', ({ deliveryId, location }) => {
+        // Broadcast that location to everyone watching this delivery
+        io.to(deliveryId).emit('driverLocationUpdate', location);
+      });
+    
       socket.on('disconnect', () => {
-        console.log('❌ Client disconnected:', socket.id);
+        console.log('Client disconnected:', socket.id);
       });
     });
-
-    // 🔁 Simulate location updates for tracked deliveries
-    setInterval(() => {
-      for (const deliveryId of activeDeliveries) {
-        const sampleLocation = {
-          lat: 6.9271 + Math.random() * 0.01,
-          lng: 79.8612 + Math.random() * 0.01,
-        };
-
-        io.to(deliveryId).emit('locationUpdate', sampleLocation);
-        console.log(`📦 Emitted location for ${deliveryId}:`, sampleLocation);
-      }
-    }, 5000); // every 5 seconds
 
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {

@@ -7,42 +7,39 @@ const geocodeAddress = require('../utils/geocode'); // Import correctly
 exports.createDelivery = async (req, res) => {
   try {
     const { customerId, address, status } = req.body;
-
-    console.log("🟢 Incoming Request:", { customerId, address, status });
-
     if (!customerId || !address || !status) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Geocode the address
+    // 1️⃣ Geocode the delivery address
     const location = await geocodeAddress(address);
     if (!location) {
-      return res.status(400).json({ message: "Address could not be geocoded" });
+      return res.status(400).json({ message: "Could not geocode address" });
     }
 
-    // Assign driver based on location
-    const assignedDriver = await assignDriver(location);
+    // 2️⃣ Find the single closest driver (ignoring availability)
+    const driver = await assignDriver(location);
 
-    const delivery = new Delivery({
+    // 3️⃣ Create & save the new delivery
+    const delivery = await new Delivery({
       customerId,
-      driverId: assignedDriver._id,
+      driverId: driver._id,
       address,
       location,
-      status,
-    });
+      status
+    }).save();
 
-    const savedDelivery = await delivery.save();
-
-    res.status(201).json({
-      delivery: savedDelivery,
+    // 4️⃣ Return both objects
+    return res.status(201).json({
+      delivery,
       assignedDriver: {
-        id: assignedDriver._id,
-        name: assignedDriver.name,
-      },
+        id: driver._id,
+        name: driver.name
+      }
     });
-  } catch (error) {
-    console.error("❌ createDelivery error:", error.message);
-    res.status(500).json({ message: "Failed to create delivery", error: error.message });
+  } catch (err) {
+    console.error("❌ createDelivery error:", err);
+    return res.status(500).json({ message: err.message || "Server error" });
   }
 };
 
@@ -68,7 +65,6 @@ exports.getDeliveryById = async (req, res) => {
   }
 };
 
-
 exports.updateDelivery = async (req, res) => {
   try {
     const { customerId, address, location, status } = req.body;
@@ -85,8 +81,6 @@ exports.updateDelivery = async (req, res) => {
   }
 };
 
-
-
 exports.deleteDelivery = async (req, res) => {
   try {
     const deleted = await Delivery.findByIdAndDelete(req.params.id);
@@ -96,7 +90,6 @@ exports.deleteDelivery = async (req, res) => {
     res.status(500).json({ message: "Failed to delete delivery", error: err.message });
   }
 };
-
 
 exports.updateStatus = async (req, res) => {
   try {
