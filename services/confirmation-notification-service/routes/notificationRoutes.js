@@ -33,6 +33,6 @@ router.post('/driver-notification', (req, res) => {
     res.status(200).json({ message: 'Driver notification sent successfully' });
 });
 
-// More routes can be added for other events like paymentReceived, orderShipped, etc.
+
 
 module.exports = router;
