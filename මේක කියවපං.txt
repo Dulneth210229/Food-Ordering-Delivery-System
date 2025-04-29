@@ -1,8 +1,0 @@
-මේ ෆොල්ඩෙර් එකට කෙලින්ම service eka දාන්න
-
-
-ඔයාලට අදාල  service name eken folder eka create karala danna 
-
-Eg. Deliver-service
-
-Hriyata dapan.............................
