@@ -14,13 +14,11 @@ exports.getAllDrivers = async (req, res) => {
 exports.getDriverById = async (req, res) => {
   try {
     const driver = await Driver.findById(req.params.id);
-    if (!driver) {
-      return res.status(404).json({ message: "Driver not found" });
-    }
+    if (!driver) return res.status(404).json({ message: "Driver not found" });
     res.json(driver);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error", error });
+  } catch (err) {
+    console.error("❌ getDriverById error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 };
 

@@ -1,142 +1,197 @@
+// src/pages/CreateDeliveryPage.tsx
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-export default function CreateDeliveryForm() {
+interface NewDelivery {
+  customerId: string;
+  address: string;
+  status: "Assigned" | "Pending" | "In Transit" | "Delivered";
+}
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+export default function CreateDeliveryPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<NewDelivery>({
     customerId: "",
     address: "",
-
-    status: "Assigned"
+    status: "Assigned",
   });
-
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const geocodeAddress = async (address: string) => {
-    const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-      address
-    )}&key=${apiKey}`;
-
-    const response = await axios.get(url);
-    const result = response.data.results[0];
-    if (!result) throw new Error("Address could not be geocoded");
-
-    return result.geometry.location; // { lat: ..., lng: ... }
+    setForm((f) => ({ ...f, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
 
-    const { customerId, address, status } = form;
-    if (!customerId || !address || !status) {
-      setError("All fields are required");
+    if (!form.customerId || !form.address) {
+      setError("All fields are required.");
       return;
     }
 
     try {
-      const location = await geocodeAddress(address);
-
-      await axios.post("http://localhost:5000/api/delivery", {
+      await axios.post(`${API_BASE_URL}/api/delivery`, {
         customerId: form.customerId,
-        address: form.address,        // ✅ Ensure it's address, not location
-        status: form.status
+        address: form.address,
+        status: form.status,
       });
-      
-
-      navigate("/");
+      setSuccess("✅ Delivery created successfully!");
+      // after 1.5s, redirect to dashboard
+      setTimeout(() => navigate("/"), 1500);
     } catch (err: any) {
-      console.error(err);
-      setError(" Failed to create delivery. " + (err.message || ""));
+      console.error("❌ Error creating delivery:", err);
+      setError("Failed to create delivery.");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ padding: "30px", maxWidth: "400px", margin: "auto", backgroundColor: "#fefefe", border: "1px solid #ddd", borderRadius: "8px" }}>
-      <h2 style={{ marginBottom: "20px", textAlign: "center" }}>Create Delivery</h2>
+    <div style={container}>
+      <header style={header}>
+        <h1 style={headerTitle}>📦 Create Delivery</h1>
+      </header>
 
-      <input
-        style={input}
-        type="text"
-        name="customerId"
-        placeholder="Customer ID"
-        value={form.customerId}
-        onChange={handleChange}
-        required
-      />
+      <main style={main}>
+        <div style={card}>
+          {error && (
+            <p style={{ color: "#d32f2f", marginBottom: 12 }}>{error}</p>
+          )}
+          {success && (
+            <p style={{ color: "#388e3c", marginBottom: 12 }}>{success}</p>
+          )}
 
-      <input
-        style={input}
-        type="text"
-        name="address"
-        placeholder="Delivery Address"
-        value={form.address}
-        onChange={handleChange}
-        required
-      />
+          <form onSubmit={handleSubmit} style={formStyle}>
+            <input
+              name="customerId"
+              placeholder="Customer ID"
+              value={form.customerId}
+              onChange={handleChange}
+              required
+              style={inputStyle}
+            />
 
-      <select
-        style={input}
-        name="status"
-        value={form.status}
-        onChange={handleChange}
-      >
-        <option value="Assigned">Assigned</option>
-        <option value="Pending">Pending</option>
-        <option value="In Transit">In Transit</option>
-        <option value="Delivered">Delivered</option>
-      </select>
+            <input
+              name="address"
+              placeholder="Delivery Address"
+              value={form.address}
+              onChange={handleChange}
+              required
+              style={inputStyle}
+            />
 
-      <div>
-        <button type="submit" style={submitBtn}>Create Delivery</button>
-        <button
-          type="button"
-          style={backBtn}
-          onClick={() => navigate("/")}
-        >
-          ← Back to Dashboard
-        </button>
-      </div>
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              style={inputStyle}
+            >
+              <option>Assigned</option>
+              <option>Pending</option>
+              <option>In Transit</option>
+              <option>Delivered</option>
+            </select>
 
-      {error && <div style={{ color: "red", marginTop: "15px", fontWeight: "bold" }}>❌ {error}</div>}
-    </form>
+            <div style={btnGroup}>
+              <button type="submit" style={btnPrimary}>
+                Create Delivery
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                style={btnSecondary}
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+
+      <footer style={footer}>© 2025 Delivery Dashboard</footer>
+    </div>
   );
 }
 
-const input = {
-  width: "100%",
-  padding: "10px",
-  marginBottom: "15px",
-  borderRadius: "4px",
-  border: "1px solid #ccc",
-  fontSize: "16px"
+// --- Layout Styles ---
+const container: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  minHeight: "100vh",
+  fontFamily: "Arial, sans-serif",
+};
+const header: React.CSSProperties = {
+  background: "#e1f5fe",
+  padding: "16px 24px",
+  textAlign: "center",
+};
+const headerTitle: React.CSSProperties = {
+  margin: 0,
+  color: "#01579b",
+  fontSize: "1.8rem",
+};
+const main: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  background: "#fafafa",
+};
+const footer: React.CSSProperties = {
+  background: "#e1f5fe",
+  padding: "12px 0",
+  textAlign: "center",
 };
 
-const submitBtn = {
-  padding: "10px 20px",
-  fontSize: "16px",
-  backgroundColor: "#007bff",
-  color: "#fff",
+// --- Card & Form Styles ---
+const card: React.CSSProperties = {
+  background: "#fff",
+  padding: "24px",
+  borderRadius: "8px",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  maxWidth: "400px",
+  width: "100%",
+};
+const formStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+};
+const inputStyle: React.CSSProperties = {
+  marginBottom: "12px",
+  padding: "10px",
+  fontSize: "1rem",
+  borderRadius: "4px",
+  border: "1px solid #ccc",
+};
+
+// --- Button Styles ---
+const btnGroup: React.CSSProperties = {
+  display: "flex",
+  gap: "8px",
+  marginTop: "16px",
+};
+const btnBase: React.CSSProperties = {
+  flex: 1,
+  padding: "10px 16px",
   border: "none",
   borderRadius: "4px",
   cursor: "pointer",
-  marginRight: "10px"
+  fontSize: "0.95rem",
 };
-
-const backBtn = {
-  padding: "10px 20px",
-  backgroundColor: "#6c757d",
+const btnPrimary: React.CSSProperties = {
+  ...btnBase,
+  background: "#0288d1",
   color: "#fff",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer"
+};
+const btnSecondary: React.CSSProperties = {
+  ...btnBase,
+  background: "#6c757d",
+  color: "#fff",
 };

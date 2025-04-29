@@ -1,222 +1,105 @@
+// src/pages/DriverTrackingPage.tsx
 import React, { useEffect, useState, useRef } from "react";
-import { GoogleMap, Marker, DirectionsRenderer, useJsApiLoader } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  Marker,
+  DirectionsRenderer,
+  useJsApiLoader,
+} from "@react-google-maps/api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const containerStyle = {
-  width: "100%",
-  height: "600px",
-};
+const containerStyle = { width: "100%", height: "600px" };
+const API_BASE_URL   = process.env.REACT_APP_API_URL!;
+const GMKEY          = process.env.REACT_APP_GOOGLE_MAPS_API_KEY!;
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
-
-const DriverTrackingPage: React.FC = () => {
+export default function DriverTrackingPage() {
   const navigate = useNavigate();
+  const mapRef   = useRef<google.maps.Map|null>(null);
 
-  const [driverLocation, setDriverLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
-  const [routePath, setRoutePath] = useState<google.maps.LatLngLiteral[]>([]);
-  const [deliveryId, setDeliveryId] = useState<string>(""); // ✅ Track current delivery ID
+  const [driverLoc,   setDriverLoc]   = useState<google.maps.LatLngLiteral|null>(null);
+  const [deliveryLoc, setDeliveryLoc] = useState<google.maps.LatLngLiteral|null>(null);
+  const [directions,  setDirections]  = useState<google.maps.DirectionsResult|null>(null);
 
-  const mapRef = useRef<google.maps.Map | null>(null);
-
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY!,
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: GMKEY,
+    libraries: ["places"],
   });
 
-  const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
-    try {
-      const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
-      );
-      if (response.data.status === "OK") {
-        return response.data.results[0].geometry.location;
-      } else {
-        console.error("Geocoding failed:", response.data.status);
-        return null;
-      }
-    } catch (error) {
-      console.error("Geocoding error:", error);
-      return null;
-    }
-  };
-
+  // ① fetch & geocode
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       try {
-        const driverId = "your_driver_id_here"; // 🛑 Replace with real logged-in driverId
+        const driverId = process.env.REACT_APP_DRIVER_ID!;
+        const delRes = await axios.get<{ _id: string; location: google.maps.LatLngLiteral }[]>(
+          `${API_BASE_URL}/api/delivery/driver/${driverId}`
+        );
+        if (!delRes.data.length) return;
+        setDeliveryLoc(delRes.data[0].location);
 
-        const deliveriesRes = await axios.get(`${API_BASE_URL}/api/deliveries/driver/${driverId}`);
-        const deliveries = deliveriesRes.data;
-
-        if (deliveries.length === 0) {
-          console.warn("No deliveries found for driver.");
-          return;
+        const drvRes = await axios.get<{ address: string }>(
+          `${API_BASE_URL}/api/drivers/${driverId}`
+        );
+        const geo = await axios.get<{ results: any[]; status: string }>(
+          `https://maps.googleapis.com/maps/api/geocode/json`,
+          { params: { address: drvRes.data.address, key: GMKEY } }
+        );
+        if (geo.data.status === "OK" && geo.data.results.length) {
+          const loc = geo.data.results[0].geometry.location;
+          setDriverLoc({ lat: loc.lat, lng: loc.lng });
         }
-
-        const delivery = deliveries[0]; // First delivery
-
-        setDeliveryId(delivery._id); // ✅ Save delivery id
-
-        if (delivery.location) {
-          setDeliveryLocation(delivery.location);
-        }
-
-        const driverRes = await axios.get(`${API_BASE_URL}/api/drivers/${driverId}`);
-        const driver = driverRes.data;
-
-        if (driver.address) {
-          const driverCoords = await geocodeAddress(driver.address);
-          if (driverCoords) {
-            setDriverLocation(driverCoords);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching delivery or driver info:", error);
+      } catch (err) {
+        console.error(err);
       }
-    };
-
-    fetchData();
+    })();
   }, []);
 
+  // ② request directions
   useEffect(() => {
-    if (!driverLocation || !deliveryLocation || directions) return;
-
-    const directionsService = new google.maps.DirectionsService();
-    directionsService.route(
-      {
-        origin: driverLocation,
-        destination: deliveryLocation,
-        travelMode: google.maps.TravelMode.DRIVING,
-      },
-      (result, status) => {
-        if (status === "OK" && result) {
-          setDirections(result);
-          const path = result.routes[0].overview_path.map((latlng) => ({
-            lat: latlng.lat(),
-            lng: latlng.lng(),
-          }));
-          setRoutePath(path);
-          setDriverLocation(path[0]);
-        } else {
-          console.error("Directions request failed:", status);
+    if (!isLoaded || !driverLoc || !deliveryLoc) return;
+    const svc = new google.maps.DirectionsService();
+    svc.route(
+      { origin: driverLoc, destination: deliveryLoc, travelMode: google.maps.TravelMode.DRIVING },
+      (res, status) => {
+        if (status === "OK" && res) {
+          setDirections(res);
+          mapRef.current?.fitBounds(res.routes[0].bounds);
         }
       }
     );
-  }, [driverLocation, deliveryLocation, directions]);
+  }, [isLoaded, driverLoc, deliveryLoc]);
 
-  useEffect(() => {
-    if (routePath.length === 0) return;
-
-    let step = 0;
-    const interval = setInterval(() => {
-      if (step >= routePath.length - 1) {
-        clearInterval(interval);
-        return;
-      }
-      setDriverLocation(routePath[step + 1]);
-      step++;
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [routePath]);
-
-  const handleCompleteDelivery = async () => {
-    try {
-      await axios.post(`${API_BASE_URL}/api/deliveries/complete/${deliveryId}`);
-      alert("✅ Delivery Completed Successfully!");
-      navigate("/dashboard"); // Redirect after complete
-    } catch (error) {
-      alert("❌ Failed to complete delivery.");
-    }
-  };
-
-  if (!isLoaded) return <div>Loading Map...</div>;
+  if (loadError) return <div>Error loading Google Maps</div>;
+  if (!isLoaded) return <div>Loading map…</div>;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>🚚 Real-Time Driver Tracking</h2>
+    <div style={{ padding: 20 }}>
+      <button
+        onClick={() => navigate("/dashboard")}
+        style={{
+          marginBottom: 12, padding: "8px 16px",
+          background: "#6c757d", color:"#fff",
+          border: "none", borderRadius:4, cursor:"pointer"
+        }}
+      >
+        ← Back
+      </button>
 
-      <div style={{ marginBottom: "20px" }}>
-        <button onClick={() => navigate("/dashboard")} style={backButtonStyle}>
-          ← Back to Dashboard
-        </button>
-
-        {/* ✅ Complete Delivery Button */}
-        {deliveryId && (
-          <button onClick={handleCompleteDelivery} style={completeButtonStyle}>
-            ✅ Complete Delivery
-          </button>
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={driverLoc||deliveryLoc||{lat:0,lng:0}}
+        zoom={12}
+        onLoad={map => { mapRef.current = map; }}
+      >
+        {driverLoc   && <Marker position={driverLoc}   label="👤" />}
+        {deliveryLoc && <Marker position={deliveryLoc} label="📍" />}
+        {directions && (
+          <DirectionsRenderer
+            directions={directions}
+            options={{ suppressMarkers:true, polylineOptions:{ strokeColor:"#28a745", strokeWeight:6 } }}
+          />
         )}
-      </div>
-
-      {driverLocation && deliveryLocation && (
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          onLoad={(map) => {
-            mapRef.current = map;
-            const bounds = new window.google.maps.LatLngBounds();
-            bounds.extend(driverLocation);
-            bounds.extend(deliveryLocation);
-            map.fitBounds(bounds);
-          }}
-        >
-          {/* Driver Marker */}
-          <Marker
-            position={driverLocation}
-            label="Driver"
-            icon={{
-              url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-            }}
-          />
-
-          {/* Delivery Marker */}
-          <Marker
-            position={deliveryLocation}
-            label="Delivery"
-            icon={{
-              url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
-            }}
-          />
-
-          {/* Draw the Route */}
-          {directions && (
-            <DirectionsRenderer
-              directions={directions}
-              options={{
-                suppressMarkers: true,
-                polylineOptions: {
-                  strokeColor: "#1E90FF",
-                  strokeOpacity: 0.8,
-                  strokeWeight: 6,
-                },
-              }}
-            />
-          )}
-        </GoogleMap>
-      )}
+      </GoogleMap>
     </div>
   );
-};
-
-const backButtonStyle = {
-  marginRight: "10px",
-  padding: "10px 20px",
-  backgroundColor: "#6c757d",
-  color: "#fff",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer",
-};
-
-const completeButtonStyle = {
-  padding: "10px 20px",
-  backgroundColor: "#28a745",
-  color: "#fff",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer",
-};
-
-export default DriverTrackingPage;
+}

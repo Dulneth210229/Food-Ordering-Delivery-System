@@ -91,6 +91,17 @@ exports.deleteDelivery = async (req, res) => {
   }
 };
 
+exports.getDeliveriesByDriver = async (req, res) => {
+  try {
+    const { driverId } = req.params;
+    const deliveries = await Delivery.find({ driverId });
+    res.json(deliveries);
+  } catch (err) {
+    console.error('❌ getDeliveriesByDriver error:', err.message);
+    res.status(500).json({ message: 'Failed to fetch deliveries for driver', error: err.message });
+  }
+};
+
 exports.updateStatus = async (req, res) => {
   try {
     const { deliveryId, status } = req.body;

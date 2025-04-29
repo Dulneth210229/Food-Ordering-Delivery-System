@@ -15,7 +15,6 @@ const driverSchema = new mongoose.Schema({
   licenseNumber: { type: String, required: true },
   address: { type: String, required: false }, // ✅ Must be present
   status: { type: String, default: "active" },
-  isAvailable: { type: Boolean, default: true },
   currentOrders: { type: Number, default: 0 }
 }, { timestamps: true });
 
