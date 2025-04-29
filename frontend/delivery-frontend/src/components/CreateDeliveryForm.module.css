@@ -1,0 +1,84 @@
+.formContainer {
+    padding: 30px;
+    max-width: 500px;
+    margin: 20px auto;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .title {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .inputField,
+  .selectField {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+  
+  .buttonPrimary,
+  .buttonSecondary {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .buttonPrimary {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .buttonPrimary:hover {
+    background-color: #0056b3;
+  }
+  
+  .buttonSecondary {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .buttonSecondary:hover {
+    background-color: #545b62;
+  }
+  
+  /* 🔁 Responsive Tweaks */
+  @media screen and (max-width: 600px) {
+    .formContainer {
+      padding: 20px;
+      margin: 10px;
+      width: 90%;
+    }
+  
+    .inputField,
+    .selectField,
+    .buttonPrimary,
+    .buttonSecondary {
+      font-size: 15px;
+      padding: 10px;
+    }
+  }
+
+  .assigned {
+    margin-top: 15px;
+    font-weight: bold;
+    color: green;
+  }
+  
+  .error {
+    color: red;
+    margin-top: 10px;
+  }
+  
+  

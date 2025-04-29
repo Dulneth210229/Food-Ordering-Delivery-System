@@ -1,0 +1,26 @@
+services:
+  delivery-service:
+    build: ./services/delivery-management-service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+    environment:
+      - NODE_ENV=development
+
+  confirmation-service:   # <--- New service
+    build: ./services/confirmation-notification-service
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=development
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
