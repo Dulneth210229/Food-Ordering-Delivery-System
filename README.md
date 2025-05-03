@@ -1,100 +1,127 @@
-# 🍔 Cloud-Native Food Ordering & Delivery System
+# 🍽️ Cloud-Native Food Order System
 
-A distributed, scalable food ordering and delivery platform inspired by UberEats and PickMe Food, developed using the **MERN stack** with a **microservices architecture**, containerized using **Docker**, and orchestrated via **Kubernetes**.
+This is a cloud-native microservices-based food ordering system built using Node.js, Express, MongoDB, and React. It includes:
 
----
-
-## 📋 Table of Contents
-
-- [Project Overview](#project-overview)
-- [Features](#features)
-- [Technology Stack](#technology-stack)
-- [Microservices Architecture](#microservices-architecture)
-- [Folder Structure](#folder-structure)
-- [Getting Started](#getting-started)
-- [Running with Docker](#running-with-docker)
-- [Kubernetes Deployment](#kubernetes-deployment)
-- [Team Members](#team-members)
+- 🔐 User Management and Payment Service  
+- 📦 Order Management and Notification Service  
+- 🍴 Restaurant Management Service  
+- 🚚 Delivery Management Service  
+- 💻 Frontend Interface
 
 ---
 
-## 📦 Project Overview
-
-This project implements a food delivery platform with the following capabilities:
-
-- Customer login, registration, order placement
-- Restaurant menu and order management
-- Delivery tracking and assignment
-- Secure online payments
-- Notifications via email/SMS
-
----
-
-## ✨ Features
-
-✅ Role-based access: Customers, Restaurant Admins, Delivery Personnel  
-✅ Real-time order placement and tracking  
-✅ RESTful API with Microservice architecture  
-✅ Email/SMS notifications  
-✅ Containerized with Docker  
-✅ Scalable deployment with Kubernetes
-
----
-
-## 🧰 Technology Stack
-
-### Frontend
-
-- React.js (with Axios & React Router)
-
-### Backend (per service)
-
-- Node.js
-- Express.js
-- MongoDB / PostgreSQL
-- JWT for authentication
-
-### Infrastructure
-
-- Docker
-- Docker Compose
-- Kubernetes (Minikube for local)
-- API Gateway (Express with http-proxy-middleware)
-
----
-
-## 🧱 Microservices Architecture
-
-| Service                | Description                                    |
-| ---------------------- | ---------------------------------------------- |
-| `user-service`         | Handles user registration, login, JWT auth     |
-| `restaurant-service`   | Menu management, restaurant data, availability |
-| `order-service`        | Order placement, order status                  |
-| `payment-service`      | Integrates PayHere/FriMi/Stripe for payments   |
-| `delivery-service`     | Assigns deliveries, tracks status              |
-| `notification-service` | Sends order confirmations, SMS/email alerts    |
-| `api-gateway`          | Routes requests to appropriate microservices   |
-
-Each service runs independently, communicates via REST, and is containerized.
-
----
-
-## 📁 Folder Structure
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js & npm
-- Docker & Docker Compose
-- MongoDB & PostgreSQL (local or cloud)
-- Minikube (optional, for K8s deployment)
-
-### 1. Clone the Repo
+## 📥 Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/<your-team>/food-delivery-system.git
-cd food-delivery-system
+git clone https://github.com/your-username/Cloud-Native-FoodOrderSystem.git
+cd Cloud-Native-FoodOrderSystem
+
+```
+🛠️ **Step 2: Backend Services Setup**
+---
+🔐 User Management and Payment Service
+```bash
+cd User_Management_And_Payment_Service/backend
+npm install
+```
+
+Create a .env file in the above directory with:
+
+```bash
+PORT=5000
+NODE_ENV=production
+MONGO_URI=mongodb+srv://your-mongo-connection-string
+JWT_SECRET=your-jwt-secret-key
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+MAILGUN_API_KEY=your-mailgun-api-key
+MAILGUN_DOMAIN=your-mailgun-domain
+MAILGUN_URL=https://api.mailgun.net/v3
+FRONTEND_URL=https://your-frontend-url.com
+EMAIL_SERVICE=gmail
+EMAIL_USER=salemanager516@gmail.com
+EMAIL_PASS=byklfvxpgjyvrddf
+EMAIL_FROM=salemanager516@gmail.com
+TWILIO_ACCOUNT_SID=ACef89d944edc0577252aeac6c34f68001
+TWILIO_AUTH_TOKEN=a34230519e165846f26e7ae42fe63568
+TWILIO_PHONE_NUMBER=+15076323529
+TWILIO_WHATSAPP_PHONE_NUMBER=+14155238886
+STRIPE_SECRET_KEY=sk_test##########
+STRIPE_WEBHOOK_SECRET=whse_############
+```
+
+📦 Order Management and Notification Service
+```bash
+
+cd Order_Mangement_And_Notification_Service/backend
+npm install
+```
+Create a .env file:
+```bash
+PORT=5001
+MONGO_URI=mongodb+srv://your-mongo-connection-string
+EMAIL_USER=salemanager516@gmail.com
+EMAIL_PASS=byklfvxpgjyvrddf
+TWILIO_ACCOUNT_SID=ACef89d944edc0577252aeac6c34f68001
+TWILIO_AUTH_TOKEN=a34230519e165846f26e7ae42fe63568
+TWILIO_PHONE_NUMBER=+15076323529
+```
+
+🍴 Restaurant Management Service
+```bash
+
+cd Restaurant_Management_Service/backend
+npm install
+```
+
+Create a .env file:
+```bash
+PORT=5003
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://your-mongo-connection-string
+```
+
+🚚 Delivery Management Service
+```bash
+
+cd Delivery_Management_Service/backend
+npm install
+```
+
+Create a .env file:
+```bash
+PORT=5002
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://your-mongo-connection-string
+```
+
+## **💻 Step 3: Frontend Setup**
+```bash
+cd frontend
+npm install
+```
+
+## **🐳 Step 4: Dockerizing All Services**
+🏗️ Build Docker Images
+```bash
+
+# User Management Service
+cd User_Management_And_Payment_Service
+docker build -t user-service .
+
+# Order Management Service
+cd ../Order_Mangement_And_Notification_Service
+docker build -t order-service .
+
+# Restaurant Management Service
+cd ../Restaurant_Management_Service
+docker build -t restaurant-service .
+
+# Delivery Management Service
+cd ../Delivery_Management_Service
+docker build -t delivery-service .
+
+# Frontend
+cd ../frontend
+docker build -t frontend .
 ```
